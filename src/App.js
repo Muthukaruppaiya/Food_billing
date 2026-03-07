@@ -1,25 +1,27 @@
-import logo from './logo.svg';
+import React from 'react';
+import { AppProvider, useApp } from './context/AppContext';
+import Login from './components/Login';
+import WaiterView from './components/WaiterView';
+import ChefView from './components/ChefView';
+import BillingView from './components/BillingView';
+import AdminView from './components/AdminView';
 import './App.css';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+function AppContent() {
+  const { role } = useApp();
+
+  if (!role) return <Login />;
+  if (role === 'WAITER') return <WaiterView />;
+  if (role === 'CHEF') return <ChefView />;
+  if (role === 'BILLING') return <BillingView />;
+  if (role === 'ADMIN') return <AdminView />;
+  return null;
 }
 
-export default App;
+export default function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  );
+}
