@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  BILLING
+  CHEF
+  WAITER
+}
+
+enum OrderStatus {
+  PLACED
+  PREPARING
+  READY
+  SERVED
+  DELIVERED
+  CANCELLED
+  BILLED
+}
+
+enum ItemStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
+  FINISHED
+  CANCELLED
+}
+
+enum OrderType {
+  DINE_IN
+  PARCEL
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  MIXED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String?
+  role      Role
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MenuItem {
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  type      String
+  imageUrl  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     OrderItem[]
+}
+
+model Order {
+  id            Int          @id @default(autoincrement())
+  tokenNumber   Int          @unique
+  tableNumber   String
+  status        OrderStatus  @default(PLACED)
+  orderType     OrderType    @default(DINE_IN)
+  paymentMethod PaymentMethod?
+  waiterId      Int?
+  customerName  String?
+  notes         String?
+  subtotal      Decimal      @default(0) @db.Decimal(10, 2)
+  cgst          Decimal      @default(0) @db.Decimal(10, 2)
+  sgst          Decimal      @default(0) @db.Decimal(10, 2)
+  total         Decimal      @default(0) @db.Decimal(10, 2)
+  billed        Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  items         OrderItem[]
+
+  @@index([status, createdAt])
+  @@index([tableNumber, billed])
+}
+
+model OrderItem {
+  id         Int        @id @default(autoincrement())
+  orderId    Int
+  menuItemId Int
+  quantity   Int
+  price      Decimal    @db.Decimal(10, 2)
+  itemStatus ItemStatus @default(PENDING)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  order      Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem   @relation(fields: [menuItemId], references: [id])
+}
+
+model Bill {
+  id            Int           @id @default(autoincrement())
+  billNumber    Int           @unique
+  tableNumber   String
+  subtotal      Decimal       @db.Decimal(10, 2)
+  cgst          Decimal       @db.Decimal(10, 2)
+  sgst          Decimal       @db.Decimal(10, 2)
+  discount      Decimal       @default(0) @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod @default(CASH)
+  tokenNumbers  String
+  createdAt     DateTime      @default(now())
+
+  @@index([createdAt])
+}
+
+model Setting {
+  id              Int      @id @default(autoincrement())
+  restaurantName  String   @default("Hotel Gourmet")
+  address         String   @default("123, Food Street, Gourmet City")
+  city            String   @default("Tamil Nadu, India, 641001")
+  phone           String   @default("+91 98765-43210")
+  email           String   @default("contact@hotelgourmet.com")
+  gstin           String   @default("")
+  footerMessage   String   @default("Thank you for dining with us! Visit again!")
+  termsConditions String   @default("Food once served cannot be exchanged.")
+  enableDiscount  Boolean  @default(true)
+  enableTax       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead, createdAt])
+}
+
+model Purchase {
+  id           Int      @id @default(autoincrement())
+  itemName     String
+  quantity     Float
+  unitPrice    Decimal  @db.Decimal(10, 2)
+  totalPrice   Decimal  @db.Decimal(10, 2)
+  supplierName String?
+  purchaseDate String
+  notes        String?
+  createdAt    DateTime @default(now())
+}
+
+model InventoryItem {
+  id             Int      @id @default(autoincrement())
+  name           String
+  category       String
+  unit           String
+  currentStock   Float
+  minimumStock   Float
+  costPerUnit    Decimal  @db.Decimal(10, 2)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  movements      InventoryMovement[]
+
+  @@index([category, isActive])
+}
+
+model InventoryMovement {
+  id              Int      @id @default(autoincrement())
+  inventoryItemId Int
+  movementType    String
+  quantity        Float
+  reason          String?
+  createdAt       DateTime @default(now())
+  item            InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+}
+
+model CashSession {
+  id            Int           @id @default(autoincrement())
+  openedBy      String
+  openingAmount Decimal       @db.Decimal(10, 2)
+  closedBy      String?
+  closingAmount Decimal?      @db.Decimal(10, 2)
+  cashInHand    Decimal?      @db.Decimal(10, 2)
+  isOpen        Boolean       @default(true)
+  openedAt      DateTime      @default(now())
+  closedAt      DateTime?
+}

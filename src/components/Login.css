@@ -1,0 +1,113 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 480px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+}
+
+.login-header {
+    text-align: center;
+}
+
+.login-header h2 {
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.login-header h2 span {
+    color: var(--accent);
+}
+
+.login-header p {
+    color: var(--text-light);
+    font-size: 16px;
+    margin-top: 6px;
+}
+
+.demo-subtitle {
+    text-align: center;
+    color: var(--text-light);
+    font-size: 15px;
+    margin-top: -10px;
+}
+
+.demo-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.demo-login-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    transition: all .3s ease;
+    text-align: left;
+}
+
+.demo-login-btn:hover {
+    border-color: var(--role-color);
+    background: color-mix(in srgb, var(--role-color) 8%, white);
+    transform: translateX(4px);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--role-color) 15%, transparent);
+}
+
+.demo-icon {
+    font-size: 32px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--role-color) 10%, white);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.demo-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.demo-role {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.demo-user {
+    font-size: 13px;
+    color: var(--text-light);
+}
+
+.demo-arrow {
+    margin-left: auto;
+    font-size: 20px;
+    color: var(--text-light);
+    transition: all .3s ease;
+}
+
+.demo-login-btn:hover .demo-arrow {
+    color: var(--role-color);
+    transform: translateX(4px);
+}

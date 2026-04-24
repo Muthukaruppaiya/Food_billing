@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+backend/node_modules/
 
 # testing
 /coverage
@@ -11,13 +12,25 @@
 # production
 /build
 
-# misc
-.DS_Store
+# backend uploads (user files — not stored in git)
+backend/uploads/
+
+# debug logs
+debug-*.log
+*.log
+
+# environment secrets — NEVER commit these
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
 
+# misc
+.DS_Store
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+copy_image.js
+converted-react-native.zip
