@@ -1,3 +1,14 @@
+const fs = require("fs");
+const path = require("path");
+
+// Auto-create backend/.env from backend/.env.example on first run
+const envPath = path.resolve(__dirname, "..", ".env");
+const envExamplePath = path.resolve(__dirname, "..", ".env.example");
+if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
+  fs.copyFileSync(envExamplePath, envPath);
+  console.log("ℹ  Created backend/.env from .env.example (edit it if needed)");
+}
+
 require("dotenv").config();
 const http = require("http");
 const { Server } = require("socket.io");

@@ -1,70 +1,139 @@
-# Getting Started with Create React App
+# Hotel Billing App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack restaurant billing & order management system with **React** frontend and **Node.js + Express + PostgreSQL (Prisma)** backend.
 
-## Available Scripts
+- Admin, Waiter, Chef and Billing dashboards
+- Real-time order updates via Socket.IO
+- Image uploads for menu items
+- 2-inch (58 mm) thermal printer receipt support
+- Role-based authentication
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## ⚡ Quick Start on a Fresh Machine
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Prerequisites
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Install these once on the new system:
 
-### `npm test`
+1. **Node.js ≥ 18** — <https://nodejs.org/>
+2. **PostgreSQL ≥ 13** — <https://www.postgresql.org/download/>
+3. **Git** — <https://git-scm.com/>
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Setup (first time only)
 
-### `npm run build`
+```bash
+# 1. Clone the repo
+git clone https://github.com/Muthukaruppaiya/Food_billing.git
+cd Food_billing
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# 2. Install ALL dependencies (frontend + backend together)
+npm install
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+> `npm install` automatically installs both the frontend and the backend dependencies via a `postinstall` script.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Configure the database
 
-### `npm run eject`
+Edit `backend/.env` (auto-created from `.env.example` on first startup) and make sure `DATABASE_URL` matches **your** local PostgreSQL:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```env
+PORT=8080
+DATABASE_URL=postgresql://<user>:<password>@localhost:5432/hotel_billing
+CLIENT_ORIGIN=http://localhost:3000
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+**You do NOT need to create the database manually** — the backend will create it automatically on first run.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Run the app
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+npm run dev
+```
 
-## Learn More
+That single command does everything:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+| Step | What happens |
+|------|--------------|
+| 1 | Starts the Node.js backend on `http://localhost:8080` |
+| 2 | Auto-creates the `hotel_billing` database if missing |
+| 3 | Auto-creates all 11 tables (Prisma `db push`) |
+| 4 | Seeds 4 demo users + default Settings row (only if DB is empty) |
+| 5 | Starts the React frontend on `http://localhost:3000` |
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Then open <http://localhost:3000> in your browser.
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 🔐 Demo Login Accounts
 
-### Analyzing the Bundle Size
+Seeded automatically on first startup:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+| Role    | Username  | Password    |
+|---------|-----------|-------------|
+| Admin   | admin1    | admin123    |
+| Billing | billing1  | billing123  |
+| Waiter  | waiter1   | waiter123   |
+| Chef    | chef1     | chef123     |
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🧰 Useful Commands
 
-### Advanced Configuration
+| Command | Description |
+|---|---|
+| `npm run dev` | Run frontend + backend together (recommended) |
+| `npm run backend` | Run only the backend |
+| `npm run frontend` | Run only the React frontend |
+| `npm run build` | Build the frontend for production |
+| `cd backend && npx prisma studio` | Open Prisma Studio (visual DB browser) |
+| `cd backend && npx prisma db push --force-reset` | **⚠ Reset DB:** drop all tables and recreate |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+---
 
-### Deployment
+## 📂 Project Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```
+hotel-billing-app/
+├── backend/                 # Node.js + Express + Prisma
+│   ├── prisma/
+│   │   ├── schema.prisma    # Database schema (11 tables)
+│   │   └── seed.js          # Seed demo users / settings
+│   ├── src/
+│   │   ├── lib/
+│   │   │   ├── initDb.js    # Auto DB creation + migrations
+│   │   │   ├── prisma.js
+│   │   │   └── socket.js    # Socket.IO singleton
+│   │   ├── middleware/      # Auth + error handlers
+│   │   ├── routes/api.js    # All REST endpoints
+│   │   ├── app.js           # Express app config
+│   │   └── server.js        # Entry point
+│   ├── uploads/             # Uploaded images (not in git)
+│   └── .env                 # Your local config (not in git)
+├── src/                     # React frontend
+│   ├── components/          # Admin / Billing / Chef / Waiter views
+│   ├── context/             # Global state
+│   └── services/            # API client + WebSocket
+└── package.json             # Root – runs both frontend & backend
+```
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🧹 Troubleshooting
+
+**Port 8080 already in use** — another Node process is holding it:
+
+```bash
+# Windows
+netstat -ano | findstr ":8080"
+taskkill /PID <PID> /F
+
+# macOS/Linux
+lsof -ti:8080 | xargs kill -9
+```
+
+**Port 3000 already in use** — same pattern, substitute `3000`.
+
+**Database connection refused** — make sure PostgreSQL is running and `DATABASE_URL` in `backend/.env` has the correct host/port/user/password.
+
+**Stale frontend cache after update** — In the browser, open DevTools → Application → Clear site data, then Ctrl+Shift+R.

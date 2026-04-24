@@ -2,9 +2,10 @@
  * Database auto-initializer.
  *
  * On backend startup this:
- *   1. Waits for a PostgreSQL connection.
- *   2. Runs `prisma db push` to create / sync all tables from schema.prisma.
- *   3. Seeds default admin/billing/waiter/chef users and default Setting row
+ *   1. Ensures the target PostgreSQL database exists (creates it if missing).
+ *   2. Waits for a PostgreSQL connection.
+ *   3. Runs `prisma db push` to create / sync all tables from schema.prisma.
+ *   4. Seeds default admin/billing/waiter/chef users and default Setting row
  *      (only if no User rows exist yet).
  *
  * Safe to run every startup — `db push` is idempotent and seeding is gated.
@@ -12,9 +13,58 @@
 
 const { execSync } = require("child_process");
 const path = require("path");
+const { Client } = require("pg");
 const prisma = require("./prisma");
 
 const BACKEND_ROOT = path.resolve(__dirname, "..", "..");
+
+/**
+ * Ensures the target database from DATABASE_URL exists; if not, connects to
+ * the default `postgres` database and issues `CREATE DATABASE`.
+ */
+async function ensureDatabaseExists() {
+    const url = process.env.DATABASE_URL;
+    if (!url) {
+        throw new Error(
+            "DATABASE_URL is not set. Copy backend/.env.example to backend/.env and fill it in."
+        );
+    }
+
+    let parsed;
+    try {
+        parsed = new URL(url);
+    } catch (_e) {
+        throw new Error(`Invalid DATABASE_URL: ${url}`);
+    }
+
+    const dbName = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
+    if (!dbName) return; // Nothing to create
+
+    const adminClient = new Client({
+        host: parsed.hostname,
+        port: parsed.port ? Number(parsed.port) : 5432,
+        user: decodeURIComponent(parsed.username),
+        password: decodeURIComponent(parsed.password),
+        database: "postgres" // connect to default DB to check/create target
+    });
+
+    try {
+        await adminClient.connect();
+        const { rows } = await adminClient.query(
+            "SELECT 1 FROM pg_database WHERE datname = $1",
+            [dbName]
+        );
+        if (rows.length === 0) {
+            console.log(`  [initDb] Database "${dbName}" not found — creating…`);
+            await adminClient.query(`CREATE DATABASE "${dbName}"`);
+            console.log(`  [initDb] Database "${dbName}" created ✓`);
+        } else {
+            console.log(`  [initDb] Database "${dbName}" exists ✓`);
+        }
+    } finally {
+        await adminClient.end().catch(() => {});
+    }
+}
 
 async function waitForDatabase(retries = 20, delayMs = 1500) {
     for (let attempt = 1; attempt <= retries; attempt++) {
@@ -79,6 +129,7 @@ async function initDatabase() {
     console.log("│  Initializing database…                     │");
     console.log("└────────────────────────────────────────────┘");
 
+    await ensureDatabaseExists();
     await waitForDatabase();
     console.log("  [initDb] PostgreSQL connection OK ✓");
 
