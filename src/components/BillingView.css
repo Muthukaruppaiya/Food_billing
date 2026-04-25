@@ -455,16 +455,25 @@
 }
 
 /* ══════════════════════════════════════════
-   2-INCH (58 mm) THERMAL PRINTER STYLES
-   Seenik / 58mm roll
-   Content scaled to ~85 % so nothing is cut off
-   on the right edge of the thermal head.
+   THERMAL PRINTER STYLES
+   Targets the user's printer module printable
+   area (configured 100–145 dots).  The receipt
+   fills 100 % of that area — no scaling, no
+   empty space on the right edge.
    Font: Arial Bold  (prints far cleaner than
    Courier on thermal paper)
+
+   Override --thermal-page-width below if your
+   roll is 58 mm / 80 mm / 100 mm etc.
    ══════════════════════════════════════════ */
+:root {
+    --thermal-page-width: 58mm;     /* paper roll width */
+    --thermal-print-margin: 1mm;    /* outer margin */
+}
+
 @page {
-    size: 58mm auto;   /* 58 mm wide, auto height = continuous roll */
-    margin: 1mm 2mm;   /* tight margins — we scale content ourselves */
+    size: var(--thermal-page-width) auto;
+    margin: var(--thermal-print-margin);
 }
 
 @media print {
@@ -479,32 +488,33 @@
         margin: 0 !important;
         padding: 0 !important;
         background: #fff !important;
-        width: 58mm !important;
+        width: 100% !important;
     }
 
     /* ── The receipt itself ────────────────────────
-       Rendered at natural 54 mm width, then scaled
-       down to 85 % so effective printed width ≈ 46 mm
-       (well inside a 58 mm roll, no edge cut-off).
+       Fills 100 % of the printable area — no empty
+       space on either side.  No transform/scale —
+       prints at its natural rendered size so the
+       thermal head uses every dot.
        ─────────────────────────────────────────── */
     #printable-receipt {
         position: fixed;
         top: 0;
         left: 0;
-        width: 54mm;
-        max-width: 54mm;
-        transform: scale(0.85);
-        transform-origin: top left;
+        right: 0;
+        width: 100% !important;
+        max-width: 100% !important;
         box-shadow: none !important;
         border-radius: 0 !important;
         padding: 0 !important;
         margin: 0 !important;
+        box-sizing: border-box;
 
         /* Clean, heavy sans-serif — prints crisp on
            thermal heads unlike Courier at small sizes */
         font-family: 'Arial', 'Helvetica', 'Segoe UI', sans-serif;
         font-weight: 700;              /* bold everywhere */
-        font-size: 10pt;
+        font-size: 11pt;
         line-height: 1.3;
         letter-spacing: 0.1pt;
         color: #000;
@@ -560,23 +570,25 @@
         font-size: 8.5pt;
     }
 
-    /* Items grid — 4 columns: qty | name | rate | amt */
+    /* Items grid — 4 columns: qty | name | rate | amt
+       Uses proportional widths so it auto-fills the
+       page no matter which thermal width is set. */
     #printable-receipt .receipt-table-header {
         display: grid;
-        grid-template-columns: 14pt 1fr 38pt 42pt;
-        font-size: 9pt;
+        grid-template-columns: 8% 1fr 22% 22%;
+        font-size: 10pt;
         font-weight: 900 !important;
         border-bottom: 1.5px solid #000;
         padding-bottom: 2pt;
         margin-bottom: 2pt;
-        gap: 1pt;
+        gap: 2pt;
     }
 
     #printable-receipt .receipt-item-row {
         display: grid;
-        grid-template-columns: 14pt 1fr 38pt 42pt;
-        font-size: 9pt;
-        gap: 1pt;
+        grid-template-columns: 8% 1fr 22% 22%;
+        font-size: 10pt;
+        gap: 2pt;
         margin-bottom: 2pt;
         align-items: start;
     }
