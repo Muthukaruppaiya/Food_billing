@@ -25,13 +25,20 @@
 @media (max-width: 768px) {
   .app-layout {
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
   }
 
   .main-content {
-    height: calc(100vh - 70px);
-    /* Adjust based on sidebar height */
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Waiter uses a fixed cart — main must flex, not a fixed calc height */
+  .app-layout.waiter-layout .main-content {
+    height: auto !important;
   }
 }

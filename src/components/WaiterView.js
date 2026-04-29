@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import './WaiterView.css';
 
 export default function WaiterView() {
-    const { menuItems, todayOrders, notifications, markNotifRead, placeOrder, updateOrderStatus, username, getNextToken } = useApp();
+    const { menuItems, todayOrders, notifications, markNotifRead, placeOrder, updateOrderStatus, username, getNextToken, handleLogout } = useApp();
     const toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 
     const [waiterView, setWaiterView] = useState('take');
@@ -49,7 +49,7 @@ export default function WaiterView() {
     };
 
     return (
-        <div className="app-layout">
+        <div className="app-layout waiter-layout">
             <Sidebar>
                 <button className={`nav-btn ${waiterView === 'take' ? 'active' : ''}`} onClick={() => setWaiterView('take')}>
                     Take New Order
@@ -59,11 +59,14 @@ export default function WaiterView() {
                 </button>
             </Sidebar>
 
-            <main className="main-content">
+            <main className={`main-content ${waiterView === 'take' ? 'waiter-main-has-cart' : ''}`}>
                 <header className="top-bar">
                     <h2>{waiterView === 'take' ? 'Take Order' : 'Active Tokens'}</h2>
-                    <div className="top-bar-right">
-                        <button className="notif-bell" onClick={() => setShowNotifPanel(!showNotifPanel)}>
+                    <div className="top-bar-right waiter-top-actions">
+                        <button type="button" className="waiter-mobile-logout" onClick={handleLogout}>
+                            Log out
+                        </button>
+                        <button type="button" className="notif-bell" onClick={() => setShowNotifPanel(!showNotifPanel)} aria-label="Notifications">
                             🔔 {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
                         </button>
                     </div>
@@ -166,7 +169,7 @@ export default function WaiterView() {
             </main>
 
             {waiterView === 'take' && (
-                <aside className="cart-panel">
+                <aside className={`cart-panel${cart.length === 0 ? ' cart-panel-empty' : ''}`}>
                     <div className="cart-header"><h2>Order Cart</h2><span className="cart-table">Table: {tableNumber || '—'}</span></div>
                     <div className="cart-list">
                         {cart.length === 0 ? <div className="empty-hint">Add items from the menu</div> : (

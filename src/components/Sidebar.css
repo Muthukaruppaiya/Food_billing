@@ -189,5 +189,6 @@
         padding: 8px 12px;
         font-size: 13px;
         white-space: nowrap;
+        min-height: 44px;
     }
 }
