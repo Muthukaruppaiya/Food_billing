@@ -1,6 +1,6 @@
 # Hotel Billing App
 
-A full-stack restaurant billing & order management system with **React** frontend and **Node.js + Express + PostgreSQL (Prisma)** backend.
+A full-stack restaurant billing & order management system with **React** frontend and **Node.js + Express + MySQL (Prisma)** backend.
 
 - Admin, Waiter, Chef and Billing dashboards
 - Real-time order updates via Socket.IO
@@ -17,7 +17,7 @@ A full-stack restaurant billing & order management system with **React** fronten
 Install these once on the new system:
 
 1. **Node.js ≥ 18** — <https://nodejs.org/>
-2. **PostgreSQL ≥ 13** — <https://www.postgresql.org/download/>
+2. **MySQL ≥ 8.0** (or **5.7+** with utf8mb4) — <https://dev.mysql.com/downloads/>
 3. **Git** — <https://git-scm.com/>
 
 ### Setup (first time only)
@@ -35,15 +35,19 @@ npm install
 
 ### Configure the database
 
-Edit `backend/.env` (auto-created from `.env.example` on first startup) and make sure `DATABASE_URL` matches **your** local PostgreSQL:
+Edit `backend/.env` (auto-created from `.env.example` on first startup) and set `DATABASE_URL` for **MySQL**:
 
 ```env
 PORT=8080
-DATABASE_URL=postgresql://<user>:<password>@localhost:5432/hotel_billing
+DATABASE_URL=mysql://USER:PASSWORD@localhost:3306/hotel_billing
 CLIENT_ORIGIN=http://localhost:3000
 ```
 
-**You do NOT need to create the database manually** — the backend will create it automatically on first run.
+Use a user that can **CREATE DATABASE**, or create `hotel_billing` yourself and grant that user full access to it.
+
+**Special characters in password** must be **URL-encoded** in `DATABASE_URL` (e.g. `@` → `%40`).
+
+**You do NOT need to create tables manually** — the backend runs `prisma db push` on startup and creates them.
 
 ### Run the app
 
@@ -56,8 +60,8 @@ That single command does everything:
 | Step | What happens |
 |------|--------------|
 | 1 | Starts the Node.js backend on `http://localhost:8080` |
-| 2 | Auto-creates the `hotel_billing` database if missing |
-| 3 | Auto-creates all 11 tables (Prisma `db push`) |
+| 2 | Auto-creates the `hotel_billing` database if missing (when credentials allow) |
+| 3 | Syncs all tables (Prisma `db push`) |
 | 4 | Seeds 4 demo users + default Settings row (only if DB is empty) |
 | 5 | Starts the React frontend on `http://localhost:3000` |
 
@@ -97,11 +101,11 @@ Seeded automatically on first startup:
 hotel-billing-app/
 ├── backend/                 # Node.js + Express + Prisma
 │   ├── prisma/
-│   │   ├── schema.prisma    # Database schema (11 tables)
+│   │   ├── schema.prisma    # Database schema
 │   │   └── seed.js          # Seed demo users / settings
 │   ├── src/
 │   │   ├── lib/
-│   │   │   ├── initDb.js    # Auto DB creation + migrations
+│   │   │   ├── initDb.js    # Auto DB creation + schema sync
 │   │   │   ├── prisma.js
 │   │   │   └── socket.js    # Socket.IO singleton
 │   │   ├── middleware/      # Auth + error handlers
@@ -134,6 +138,8 @@ lsof -ti:8080 | xargs kill -9
 
 **Port 3000 already in use** — same pattern, substitute `3000`.
 
-**Database connection refused** — make sure PostgreSQL is running and `DATABASE_URL` in `backend/.env` has the correct host/port/user/password.
+**Database connection refused** — ensure MySQL is running, port `3306` (or your port) is correct, and `DATABASE_URL` user/password and database name match.
+
+After switching from PostgreSQL to MySQL, use a **new** MySQL database (or `--force-reset`); data is not migrated automatically.
 
 **Stale frontend cache after update** — In the browser, open DevTools → Application → Clear site data, then Ctrl+Shift+R.

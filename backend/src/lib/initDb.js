@@ -2,31 +2,41 @@
  * Database auto-initializer.
  *
  * On backend startup this:
- *   1. Ensures the target PostgreSQL database exists (creates it if missing).
- *   2. Waits for a PostgreSQL connection.
+ *   1. Ensures the target MySQL database exists (creates it if missing).
+ *   2. Waits for a MySQL connection (via Prisma).
  *   3. Runs `prisma db push` to create / sync all tables from schema.prisma.
  *   4. Seeds default admin/billing/waiter/chef users and default Setting row
  *      (only if no User rows exist yet).
  *
- * Safe to run every startup — `db push` is idempotent and seeding is gated.
+ * Safe every startup — `db push` is idempotent and seeding is gated.
  */
 
 const { execSync } = require("child_process");
 const path = require("path");
-const { Client } = require("pg");
+const mysql = require("mysql2/promise");
 const prisma = require("./prisma");
 
 const BACKEND_ROOT = path.resolve(__dirname, "..", "..");
 
+function escapeMySqlIdent(name) {
+    return "`" + String(name).replace(/`/g, "``") + "`";
+}
+
 /**
- * Ensures the target database from DATABASE_URL exists; if not, connects to
- * the default `postgres` database and issues `CREATE DATABASE`.
+ * Ensures the target database from DATABASE_URL exists; if not, connects
+ * without a schema and runs CREATE DATABASE.
  */
 async function ensureDatabaseExists() {
     const url = process.env.DATABASE_URL;
     if (!url) {
         throw new Error(
             "DATABASE_URL is not set. Copy backend/.env.example to backend/.env and fill it in."
+        );
+    }
+
+    if (!/^mysql:\/\//i.test(url)) {
+        console.warn(
+            "  [initDb] DATABASE_URL should start with mysql:// for MySQL (see backend/.env.example)."
         );
     }
 
@@ -37,32 +47,34 @@ async function ensureDatabaseExists() {
         throw new Error(`Invalid DATABASE_URL: ${url}`);
     }
 
-    const dbName = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
-    if (!dbName) return; // Nothing to create
+    const dbName = decodeURIComponent(
+        parsed.pathname.replace(/^\//, "").split("?")[0] || ""
+    );
+    if (!dbName) return;
 
-    const adminClient = new Client({
+    const conn = await mysql.createConnection({
         host: parsed.hostname,
-        port: parsed.port ? Number(parsed.port) : 5432,
+        port: parsed.port ? Number(parsed.port) : 3306,
         user: decodeURIComponent(parsed.username),
-        password: decodeURIComponent(parsed.password),
-        database: "postgres" // connect to default DB to check/create target
+        password: parsed.password != null ? decodeURIComponent(parsed.password) : ""
     });
 
     try {
-        await adminClient.connect();
-        const { rows } = await adminClient.query(
-            "SELECT 1 FROM pg_database WHERE datname = $1",
+        const [rows] = await conn.query(
+            "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?",
             [dbName]
         );
         if (rows.length === 0) {
             console.log(`  [initDb] Database "${dbName}" not found — creating…`);
-            await adminClient.query(`CREATE DATABASE "${dbName}"`);
+            await conn.query(
+                `CREATE DATABASE ${escapeMySqlIdent(dbName)} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+            );
             console.log(`  [initDb] Database "${dbName}" created ✓`);
         } else {
             console.log(`  [initDb] Database "${dbName}" exists ✓`);
         }
     } finally {
-        await adminClient.end().catch(() => {});
+        await conn.end().catch(() => {});
     }
 }
 
@@ -74,11 +86,11 @@ async function waitForDatabase(retries = 20, delayMs = 1500) {
         } catch (err) {
             if (attempt === retries) {
                 throw new Error(
-                    `Could not connect to PostgreSQL after ${retries} attempts: ${err.message}`
+                    `Could not connect to MySQL after ${retries} attempts: ${err.message}`
                 );
             }
             console.log(
-                `  [initDb] Waiting for PostgreSQL… (attempt ${attempt}/${retries})`
+                `  [initDb] Waiting for MySQL… (attempt ${attempt}/${retries})`
             );
             await new Promise((r) => setTimeout(r, delayMs));
         }
@@ -131,7 +143,7 @@ async function initDatabase() {
 
     await ensureDatabaseExists();
     await waitForDatabase();
-    console.log("  [initDb] PostgreSQL connection OK ✓");
+    console.log("  [initDb] MySQL connection OK ✓");
 
     syncSchema();
     await seedDefaults();
