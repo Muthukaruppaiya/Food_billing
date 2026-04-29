@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 import api from '../services/api';
 import websocket from '../services/websocket';
+import { useFeedback } from './FeedbackContext';
 
 const toNumber = (value, fallback = 0) => {
     const n = Number(value);
@@ -93,6 +94,7 @@ const normalizeSettings = (data) => {
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
+    const { toast } = useFeedback();
     const [role, setRole] = useState(() => {
         const r = localStorage.getItem('X-Role');
         return r ? r.toUpperCase() : null;
@@ -383,7 +385,10 @@ export function AppProvider({ children }) {
             return newItem;
         } catch (error) {
             console.error('Error adding menu item:', error);
-            alert('Failed to add menu item: ' + (error.message || 'Unknown error'));
+            toast(
+                'Failed to add menu item: ' + (error.message || 'Unknown error'),
+                'error'
+            );
             throw error;
         }
     };
@@ -397,7 +402,10 @@ export function AppProvider({ children }) {
             return updatedItem;
         } catch (error) {
             console.error('Error updating menu item:', error);
-            alert('Failed to update menu item: ' + (error.message || 'Unknown error'));
+            toast(
+                'Failed to update menu item: ' + (error.message || 'Unknown error'),
+                'error'
+            );
             throw error;
         }
     };

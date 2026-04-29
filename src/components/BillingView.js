@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useFeedback } from '../context/FeedbackContext';
 import Sidebar from './Sidebar';
 import './BillingView.css';
 
 export default function BillingView() {
     const { menuItems, todayOrders, closeTokens, username, settings, placeParcelOrder, getNextToken, updateOrderStatus, userId } = useApp();
+    const { toast, confirm } = useFeedback();
     const toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
     const [billView, setBillView] = useState('tables'); // 'tables', 'parcel_new', 'parcels_active'
     const [billingMode, setBillingMode] = useState('TABLES'); // KEEPING FOR COMPATIBILITY OR REPLACING
@@ -101,9 +103,9 @@ export default function BillingView() {
             try {
                 await closeTokens(billingData);
                 handleTableSelect(null);
-                alert("Table Bill Generated Successfully!");
+                toast('Bill generated and table cleared.', 'success');
             } catch (error) {
-                alert("Failed to close tokens.");
+                toast('Could not generate bill. Check tokens and try again.', 'error');
             }
         } else {
             // Parcel Order
@@ -111,6 +113,7 @@ export default function BillingView() {
             try {
                 const result = await placeParcelOrder(parcelCart, paymentMethod, username);
                 setParcelCart([]);
+                toast('Parcel order placed.', 'success');
                 // API returns tokenNumber (e.g. 9001) and billNumber (e.g. "PCL-20260306-...")
                 setLastParcelToken({
                     tokenNumber: result.tokenNumber ? `P${result.tokenNumber}` : 'P---',
@@ -121,18 +124,23 @@ export default function BillingView() {
                 });
             } catch (error) {
                 console.error('Parcel order error:', error);
-                alert("Failed to create parcel order. Check console for details.");
+                toast('Could not create parcel order. Check connection and try again.', 'error');
             }
         }
     };
 
     const handleHandover = async (parcelOrder) => {
-        if (!window.confirm(`Mark Token #${parcelOrder.tokenNumber} as Delivered & Billed?`)) return;
+        const ok = await confirm({
+            title: 'Complete parcel?',
+            message: `Mark Token #${parcelOrder.tokenNumber} as delivered and billed?`,
+            confirmLabel: 'Complete'
+        });
+        if (!ok) return;
         try {
             await updateOrderStatus(parcelOrder.tokenNumber, 'BILLED');
-            alert("Parcel Completed!");
+            toast('Parcel marked complete.', 'success');
         } catch (error) {
-            alert("Failed to close parcel.");
+            toast('Could not complete parcel.', 'error');
         }
     };
 

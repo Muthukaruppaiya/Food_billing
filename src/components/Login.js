@@ -76,10 +76,10 @@ export default function Login() {
                     <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
                         <p style={{ fontSize: '0.9rem', color: '#666', textAlign: 'center', marginBottom: '10px' }}>Quick Login (Demo)</p>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                            <button type="button" className="secondary-btn" onClick={() => { setUsernameInput('admin1'); setPasswordInput('password123'); }}>Admin</button>
-                            <button type="button" className="secondary-btn" onClick={() => { setUsernameInput('waiter1'); setPasswordInput('password123'); }}>Waiter</button>
-                            <button type="button" className="secondary-btn" onClick={() => { setUsernameInput('chef1'); setPasswordInput('password123'); }}>Chef</button>
-                            <button type="button" className="secondary-btn" onClick={() => { setUsernameInput('billing1'); setPasswordInput('password123'); }}>Billing</button>
+                            <button type="button" className="secondary-btn" onClick={() => { setUsernameInput('admin1'); setPasswordInput('admin123'); }}>Admin</button>
+                            <button type="button" className="secondary-btn" onClick={() => { setUsernameInput('waiter1'); setPasswordInput('waiter123'); }}>Waiter</button>
+                            <button type="button" className="secondary-btn" onClick={() => { setUsernameInput('chef1'); setPasswordInput('chef123'); }}>Chef</button>
+                            <button type="button" className="secondary-btn" onClick={() => { setUsernameInput('billing1'); setPasswordInput('billing123'); }}>Billing</button>
                         </div>
                     </div>
                 </form>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { FeedbackProvider } from './context/FeedbackContext';
 import { AppProvider, useApp } from './context/AppContext';
 import Login from './components/Login';
 import WaiterView from './components/WaiterView';
@@ -20,8 +21,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <FeedbackProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </FeedbackProvider>
   );
 }

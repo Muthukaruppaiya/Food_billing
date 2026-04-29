@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useFeedback } from '../context/FeedbackContext';
 import Sidebar from './Sidebar';
 import './AdminView.css';
 
 export default function AdminView() {
     const { menuItems, addMenuItem, updateMenuItem, deleteMenuItem, orders, todayOrders, purchases, todayPurchases, addPurchase, deletePurchase, getDailySales, settings, updateSettings, refreshData, users, addUser, editUser, removeUser, inventoryItems, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useApp();
+    const { toast, confirm } = useFeedback();
     const toNum = (v) => {
         const n = Number(v);
         return Number.isFinite(n) ? n : 0;
@@ -77,10 +79,10 @@ export default function AdminView() {
         e.preventDefault();
         try {
             await updateSettings(editSettings);
-            alert('Settings updated successfully!');
+            toast('Settings saved successfully.', 'success');
             setAdminView('menu');
         } catch (error) {
-            alert('Failed to update settings.');
+            toast('Could not save settings. Please try again.', 'error');
         }
     };
 
@@ -111,15 +113,15 @@ export default function AdminView() {
         try {
             if (editUserId) {
                 await editUser(editUserId, newUser);
-                alert('User updated successfully');
+                toast('User updated.', 'success');
             } else {
                 await addUser(newUser);
-                alert('User added successfully');
+                toast('User created.', 'success');
             }
             setNewUser({ username: '', password: '', role: 'WAITER', displayName: '' });
             setEditUserId(null);
         } catch (err) {
-            alert('Error saving user. Username might already exist.');
+            toast('Could not save user. The username may already exist.', 'error');
         }
     };
 
@@ -133,15 +135,15 @@ export default function AdminView() {
         try {
             if (editInventoryId) {
                 await updateInventoryItem(editInventoryId, newInventory);
-                alert('Inventory item updated successfully');
+                toast('Inventory item updated.', 'success');
             } else {
                 await addInventoryItem(newInventory);
-                alert('Inventory item added successfully');
+                toast('Inventory item added.', 'success');
             }
             setNewInventory({ name: '', unit: 'kg', currentStock: 0 });
             setEditInventoryId(null);
         } catch (err) {
-            alert('Error saving inventory item.');
+            toast('Could not save inventory item.', 'error');
         }
     };
 
@@ -166,14 +168,16 @@ export default function AdminView() {
             if (editId) {
                 await updateMenuItem(editId, foodData, imageFile);
                 setEditId(null);
+                toast('Menu item updated.', 'success');
             } else {
                 await addMenuItem(foodData, imageFile);
+                toast('Menu item added.', 'success');
             }
             setNewFood({ name: '', price: '', type: 'STARTERS', imageUrl: '' });
             setImageFile(null);
             setAdminView('menu');
         } catch (err) {
-            // alert already shown inside addMenuItem / updateMenuItem
+            /* errors surfaced via toast inside add/update menu */
         }
     };
 
@@ -784,7 +788,15 @@ export default function AdminView() {
                                             <td><span className={`status-pill ${toNum(inv.currentStock) <= 5 ? 'red' : 'green'}`}>{toNum(inv.currentStock).toFixed(2)}</span></td>
                                             <td>
                                                 <button className="tbl-btn edit" onClick={() => handleEditInventoryClick(inv)}>Edit</button>
-                                                <button className="tbl-btn delete" onClick={() => { if (window.confirm('Delete this inventory item?')) deleteInventoryItem(inv.id); }}>Delete</button>
+                                                <button type="button" className="tbl-btn delete" onClick={async () => {
+                                                    const ok = await confirm({
+                                                        title: 'Delete inventory item?',
+                                                        message: 'This will remove the item from inventory records.',
+                                                        confirmLabel: 'Delete',
+                                                        danger: true
+                                                    });
+                                                    if (ok) deleteInventoryItem(inv.id);
+                                                }}>Delete</button>
                                             </td>
                                         </tr>
                                     ))}
@@ -846,7 +858,15 @@ export default function AdminView() {
                                             <td><span className={`status-pill ${u.role === 'ADMIN' ? 'red' : u.role === 'CHEF' ? 'orange' : 'blue'}`}>{u.role}</span></td>
                                             <td>
                                                 <button className="tbl-btn edit" onClick={() => handleEditUserClick(u)}>Edit</button>
-                                                {u.role !== 'ADMIN' && <button className="tbl-btn delete" onClick={() => { if (window.confirm('Delete this user?')) removeUser(u.id); }}>Delete</button>}
+                                                {u.role !== 'ADMIN' && <button type="button" className="tbl-btn delete" onClick={async () => {
+                                                    const ok = await confirm({
+                                                        title: 'Delete user?',
+                                                        message: `Remove ${u.username} from the system?`,
+                                                        confirmLabel: 'Delete',
+                                                        danger: true
+                                                    });
+                                                    if (ok) removeUser(u.id);
+                                                }}>Delete</button>}
                                             </td>
                                         </tr>
                                     ))}

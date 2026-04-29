@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useFeedback } from '../context/FeedbackContext';
 import Sidebar from './Sidebar';
 import './WaiterView.css';
 
 export default function WaiterView() {
     const { menuItems, todayOrders, notifications, markNotifRead, placeOrder, updateOrderStatus, username, getNextToken, handleLogout } = useApp();
+    const { toast, confirm } = useFeedback();
     const toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 
     const [waiterView, setWaiterView] = useState('take');
@@ -43,8 +45,9 @@ export default function WaiterView() {
             setCart([]);
             setTableNumber('');
             setWaiterView('tokens');
+            toast(`Order placed — Token #${token}`, 'success');
         } else {
-            alert('Failed to place order. Please check your connection or input.');
+            toast('Could not place order. Check table number and connection.', 'error');
         }
     };
 
@@ -149,10 +152,17 @@ export default function WaiterView() {
                                         </div>
                                         {(order.status === 'PLACED' || order.status === 'PREPARING' || order.status === 'READY') && (
                                             <button
+                                                type="button"
                                                 className="act-btn deliver"
-                                                onClick={() => {
-                                                    if (window.confirm(`Close Token #${order.tokenNumber} and send to Cashier?`)) {
+                                                onClick={async () => {
+                                                    const ok = await confirm({
+                                                        title: 'Send to cashier?',
+                                                        message: `Close Token #${order.tokenNumber} and send to billing?`,
+                                                        confirmLabel: 'Send'
+                                                    });
+                                                    if (ok) {
                                                         updateOrderStatus(order.tokenNumber, 'DELIVERED');
+                                                        toast('Order sent to cashier.', 'success');
                                                     }
                                                 }}
                                             >
